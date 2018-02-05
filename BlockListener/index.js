@@ -35,8 +35,8 @@ var getTps = function(blockHash, blockTime){
 	.then(txCount=>{
 		//console.log("TxCount", txCount);
 		let tps = txCount/blockTime;
-		avgTps = ((avgTps || tps) + tps)/2;
 		blockCount++;
+		avgTps = ((avgTps || tps) * (blockCount-1) + tps)/blockCount;
 		console.log("Block", blockCount);
 		console.log("TPS", tps);
 		console.log("AVG TPS", avgTps);
