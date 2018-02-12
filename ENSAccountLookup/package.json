@@ -1,0 +1,16 @@
+{
+  "name": "ensaccountlookup",
+  "version": "1.0.0",
+  "description": "Looks up accounts using ens resolver",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "shonjs",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^5.0.0",
+    "ethereum-ens": "^0.7.3",
+    "web3": "^1.0.0-beta.29"
+  }
+}
