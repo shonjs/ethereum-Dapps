@@ -9,6 +9,9 @@
   "license": "ISC",
   "homepage": "",
   "devDependencies": {
+    "browserify": "^16.1.0",
+    "dotenv": "^5.0.0",
+    "web3": "^1.0.0-beta.30",
     "webpack": "^3.11.0",
     "webpack-dev-server": "^2.11.1"
   }
