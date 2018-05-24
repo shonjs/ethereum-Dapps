@@ -1,5 +1,9 @@
 pragma solidity ^0.4.23;
 
+/*
+Interface for an onchain ethereum on chain atomic swap contract
+*/
+
 interface IEthSwap {
 
 	modifier isRefundAllowed(uint _time);
