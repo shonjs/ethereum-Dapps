@@ -9,13 +9,14 @@ contract EthSwap is IEthSwap{
 	mapping (bytes20 => Swap) public swaps;
 
 	// State of a swap
-	enum SwapState { Done, OneHand, TwoHands }
+	enum SwapState { Usable, OneHand, TwoHands, NotUsable }
 	
 	// A Swap structure
 	struct Swap {
 		address firstParty;
 		address secondParty;
-		uint value;
+		uint firstPartyValue;
+		uint secondPartyValue;
 		uint startTime;
 		uint deadLine;
 		bytes20 hashedSecret;
@@ -31,12 +32,27 @@ contract EthSwap is IEthSwap{
 
 	//Modifiers
 	modifier canInitiate(bytes20 secretHash) { 
-		require (swaps[secretHash].swapState == SwapState.Done); 
+		require (swaps[secretHash].swapState == SwapState.Usable); 
 		_; 
 	}
 
-	modifier canParticipate(bytes20 secretHash) { 
-		require (swaps[secretHash].swapState == SwapState.OneHand); 
+	modifier canParticipate(bytes20 secretHash, address firstParty, address secondParty) { 
+		require (swaps[secretHash].swapState == SwapState.OneHand);
+		require (swaps[secretHash].firstParty == firstParty);
+		require (swaps[secretHash].secondParty == secondParty);
+		require (block(this.block).timestamp <= swaps[secretHash].deadLine);
+		_; 
+	}
+
+	modifier canSwap(bytes32 secret, bytes20 secretHash) { 
+		require (swaps[secretHash].swapState == SwapState.TwoHands);
+		require (block(this.block).timestamp <= swaps[secretHash].deadLine);
+		require (ripemd160(secret) == swaps[secretHash].hashedSecret);
+		_; 
+	}
+
+	modifier canRefund(bytes20 secretHash) { 
+		require (block(this.block).timestamp > swaps[secretHash].deadLine);
 		_; 
 	}
 	
@@ -48,14 +64,14 @@ contract EthSwap is IEthSwap{
 		bytes20 hashedSecret,
 		uint deadLine)
 	external payable
-	canInitiate {
-		swaps[secretHash].firstParty = msg.sender;
-		swaps[secretHash].secondParty = secondParty;
-		swaps[secretHash].value = msg.value;
-		swaps[secretHash].startTime = block(this.block).timestamp;
-		swaps[secretHash].deadLine = deadLine;
-		swaps[secretHash].hashedSecret = hashedSecret;
-		swaps[secretHash].swapState = SwapState.OneHand;
+	canInitiate(secretHash) {
+		swaps[hashedSecret].firstParty = msg.sender;
+		swaps[hashedSecret].secondParty = secondParty;
+		swaps[hashedSecret].firstPartyValue = msg.value;
+		swaps[hashedSecret].startTime = block(this.block).timestamp;
+		swaps[hashedSecret].deadLine = deadLine;
+		swaps[hashedSecret].hashedSecret = hashedSecret;
+		swaps[hashedSecret].swapState = SwapState.OneHand;
 
 		FirstPartyInitiated(msg.sender, secondParty, deadLine);
 	}
@@ -65,17 +81,41 @@ contract EthSwap is IEthSwap{
 		bytes20 hashedSecret,
 		uint deadLine)
 	external payable
-	canParticipate {
-		swaps[secretHash].firstParty = firstParty;
-		swaps[secretHash].secondParty = msg.sender;
-		swaps[secretHash].value = msg.value;
-		swaps[secretHash].startTime = block(this.block).timestamp;
-		swaps[secretHash].deadLine = deadLine;
-		swaps[secretHash].hashedSecret = hashedSecret;
-		swaps[secretHash].swapState = SwapState.TwoHands;
+	canParticipate(hashedSecret, firstParty, msg.sender) {
+		swaps[hashedSecret].secondPartyValue = msg.value;
+		swaps[hashedSecret].swapState = SwapState.TwoHands;
 
 		SecondPartyParticipated(firstParty, msg.sender, deadLine);
 	}
 	
+	function Swap (
+		bytes32 secret,
+		bytes20 hashedSecret)
+	external
+	canSwap(secret, hashedSecret) {
+		if(msg.sender == swaps[hashedSecret].firstParty) {
+			swaps[hashedSecret].secondPartyValue = 0;
+			msg.sender.transfer(swaps[hashedSecret].secondPartyValue);
+		} else 
+		if(msg.sender == swaps[hashedSecret].secondParty) {
+			swaps[hashedSecret].firstPartyValue =  0;
+			msg.sender.transfer(swaps[hashedSecret].firstPartyValue);
+		}
 
+		swaps[hashedSecret].swapState = SwapState.NotUsable;
+	}
+
+	function Refund (
+		bytes20 hashedSecret)
+	external
+	canRefund(hashedSecret) {
+		if(msg.sender == swaps[hashedSecret].firstParty) {
+			swaps[hashedSecret].firstPartyValue = 0;
+			msg.sender.transfer(swaps[hashedSecret].firstPartyValue);
+		} else 
+		if(msg.sender == swaps[hashedSecret].secondParty) {
+			swaps[hashedSecret].secondPartyValue =  0;
+			msg.sender.transfer(swaps[hashedSecret].secondPartyValue);
+		}
+	}
 }
