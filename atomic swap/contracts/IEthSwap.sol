@@ -5,8 +5,6 @@ Interface for an onchain ethereum on chain atomic swap contract
 */
 
 interface IEthSwap {
-
-	modifier isRefundAllowed(uint _time);
 	
 	function FirstPartyInitiate(
 		address secondParty,
@@ -20,7 +18,7 @@ interface IEthSwap {
 		uint deadLine)
 	external payable;
 
-	function Swap (
+	function DoSwap (
 		bytes32 secret,
 		bytes20 hashedSecret)
 	external;

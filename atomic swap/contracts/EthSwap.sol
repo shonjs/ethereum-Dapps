@@ -47,7 +47,7 @@ contract EthSwap is IEthSwap{
 	modifier canSwap(bytes32 secret, bytes20 secretHash) { 
 		require (swaps[secretHash].swapState == SwapState.TwoHands);
 		require (block(this.block).timestamp <= swaps[secretHash].deadLine);
-		require (ripemd160(secret) == swaps[secretHash].hashedSecret);
+		require (ripemd160(abi.encodePacked(secret)) == swaps[secretHash].hashedSecret);
 		_; 
 	}
 
@@ -57,14 +57,14 @@ contract EthSwap is IEthSwap{
 	}
 	
 
-	function EthSwap () public {}
+	constructor(EthSwap) public {}
 
 	function FirstPartyInitiate(
 		address secondParty,
 		bytes20 hashedSecret,
 		uint deadLine)
 	external payable
-	canInitiate(secretHash) {
+	canInitiate(hashedSecret) {
 		swaps[hashedSecret].firstParty = msg.sender;
 		swaps[hashedSecret].secondParty = secondParty;
 		swaps[hashedSecret].firstPartyValue = msg.value;
@@ -73,7 +73,7 @@ contract EthSwap is IEthSwap{
 		swaps[hashedSecret].hashedSecret = hashedSecret;
 		swaps[hashedSecret].swapState = SwapState.OneHand;
 
-		FirstPartyInitiated(msg.sender, secondParty, deadLine);
+		emit FirstPartyInitiated(msg.sender, secondParty, deadLine);
 	}
 
 	function SecondPartyParticipate (
@@ -85,14 +85,15 @@ contract EthSwap is IEthSwap{
 		swaps[hashedSecret].secondPartyValue = msg.value;
 		swaps[hashedSecret].swapState = SwapState.TwoHands;
 
-		SecondPartyParticipated(firstParty, msg.sender, deadLine);
+		emit SecondPartyParticipated(firstParty, msg.sender, deadLine);
 	}
 	
-	function Swap (
+	function DoSwap (
 		bytes32 secret,
 		bytes20 hashedSecret)
 	external
 	canSwap(secret, hashedSecret) {
+		swaps[hashedSecret].swapState = SwapState.NotUsable;
 		if(msg.sender == swaps[hashedSecret].firstParty) {
 			swaps[hashedSecret].secondPartyValue = 0;
 			msg.sender.transfer(swaps[hashedSecret].secondPartyValue);
@@ -101,8 +102,6 @@ contract EthSwap is IEthSwap{
 			swaps[hashedSecret].firstPartyValue =  0;
 			msg.sender.transfer(swaps[hashedSecret].firstPartyValue);
 		}
-
-		swaps[hashedSecret].swapState = SwapState.NotUsable;
 	}
 
 	function Refund (
