@@ -102,6 +102,8 @@ contract EthSwap is IEthSwap{
 			swaps[hashedSecret].firstPartyValue =  0;
 			msg.sender.transfer(swaps[hashedSecret].firstPartyValue);
 		}
+
+		emit Swapped(msg.sender, swaps[hashedSecret].deadLine);
 	}
 
 	function Refund (
@@ -116,5 +118,7 @@ contract EthSwap is IEthSwap{
 			swaps[hashedSecret].secondPartyValue =  0;
 			msg.sender.transfer(swaps[hashedSecret].secondPartyValue);
 		}
+
+		emit Refunded(msg.sender, swaps[hashedSecret].deadLine);
 	}
 }
