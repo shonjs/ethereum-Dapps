@@ -20,7 +20,7 @@ contract EthSwap is IEthSwap{
 		uint startTime;
 		uint deadLine;
 		bytes32 hashedSecret;
-		bytes32 secret;
+		string secret;
 		SwapState swapState;		
 	}
 
@@ -32,7 +32,7 @@ contract EthSwap is IEthSwap{
 
 	//Modifiers
 	modifier canInitiate(bytes32 secretHash) { 
-		require (swaps[secretHash].swapState == SwapState.Usable, "Hash is not safe to used"); 
+		require (swaps[secretHash].swapState == SwapState.Usable, "Cannot initiate the swap again"); 
 		_; 
 	}
 
@@ -44,10 +44,10 @@ contract EthSwap is IEthSwap{
 		_; 
 	}
 
-	modifier canSwap(bytes secret, bytes32 secretHash) { 
+	modifier canSwap(string secret, bytes32 secretHash) { 
 		require (swaps[secretHash].swapState == SwapState.TwoHands, "Two parties not commited to swap");
 		require (block.timestamp <= swaps[secretHash].deadLine, "Swap deadline passed");
-		require (keccak256(secret) == swaps[secretHash].hashedSecret, "Wrong key");
+		require (keccak256(abi.encodePacked(secret)) == swaps[secretHash].hashedSecret, "Wrong key");
 		_; 
 	}
 
@@ -89,7 +89,7 @@ contract EthSwap is IEthSwap{
 	}
 	
 	function DoSwap (
-		bytes secret,
+		string secret,
 		bytes32 hashedSecret)
 	external
 	canSwap(secret, hashedSecret) {
