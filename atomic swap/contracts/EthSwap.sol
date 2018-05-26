@@ -32,27 +32,27 @@ contract EthSwap is IEthSwap{
 
 	//Modifiers
 	modifier canInitiate(bytes32 secretHash) { 
-		require (swaps[secretHash].swapState == SwapState.Usable); 
+		require (swaps[secretHash].swapState == SwapState.Usable, "Hash is not safe to used"); 
 		_; 
 	}
 
 	modifier canParticipate(bytes32 secretHash, address firstParty, address secondParty) { 
-		require (swaps[secretHash].swapState == SwapState.OneHand);
-		require (swaps[secretHash].firstParty == firstParty);
-		require (swaps[secretHash].secondParty == secondParty);
-		require (block.timestamp <= swaps[secretHash].deadLine);
+		require (swaps[secretHash].swapState == SwapState.OneHand, "No swap initiators yet");
+		require (swaps[secretHash].firstParty == firstParty, "Wrong swap initiator");
+		require (swaps[secretHash].secondParty == secondParty, "Wrong swap participant");
+		require (block.timestamp <= swaps[secretHash].deadLine, "Swap deadline passed");
 		_; 
 	}
 
 	modifier canSwap(bytes secret, bytes32 secretHash) { 
-		require (swaps[secretHash].swapState == SwapState.TwoHands);
-		require (block.timestamp <= swaps[secretHash].deadLine);
-		require (keccak256(secret) == swaps[secretHash].hashedSecret);
+		require (swaps[secretHash].swapState == SwapState.TwoHands, "Two parties not commited to swap");
+		require (block.timestamp <= swaps[secretHash].deadLine, "Swap deadline passed");
+		require (keccak256(secret) == swaps[secretHash].hashedSecret, "Wrong key");
 		_; 
 	}
 
 	modifier canRefund(bytes32 secretHash) { 
-		require (block.timestamp > swaps[secretHash].deadLine);
+		require (block.timestamp > swaps[secretHash].deadLine, "Swap deadline not passed, for refunding");
 		_; 
 	}
 	
