@@ -45,7 +45,7 @@ contract EthSwap is IEthSwap{
 	}
 
 	modifier canSwap(string secret, bytes32 secretHash) { 
-		require (swaps[secretHash].swapState == SwapState.TwoHands, "Two parties not commited to swap");
+		require (swaps[secretHash].swapState >= SwapState.TwoHands, "Two parties not commited to swap");
 		require (block.timestamp <= swaps[secretHash].deadLine, "Swap deadline passed");
 		require (keccak256(abi.encodePacked(secret)) == swaps[secretHash].hashedSecret, "Wrong key");
 		_; 
@@ -93,12 +93,13 @@ contract EthSwap is IEthSwap{
 		bytes32 hashedSecret)
 	external
 	canSwap(secret, hashedSecret) {
-		swaps[hashedSecret].swapState = SwapState.NotUsable;
 		if(msg.sender == swaps[hashedSecret].firstParty) {
+			swaps[hashedSecret].secret = secret;
 			swaps[hashedSecret].secondPartyValue = 0;
 			msg.sender.transfer(swaps[hashedSecret].secondPartyValue);
 		} else 
 		if(msg.sender == swaps[hashedSecret].secondParty) {
+			swaps[hashedSecret].swapState = SwapState.NotUsable;
 			swaps[hashedSecret].firstPartyValue =  0;
 			msg.sender.transfer(swaps[hashedSecret].firstPartyValue);
 		}
