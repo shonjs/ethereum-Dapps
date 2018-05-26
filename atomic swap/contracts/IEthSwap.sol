@@ -8,22 +8,22 @@ interface IEthSwap {
 	
 	function FirstPartyInitiate(
 		address secondParty,
-		bytes20 hashedSecret,
+		bytes32 hashedSecret,
 		uint deadLine)
 	external payable;
 
 	function SecondPartyParticipate (
 		address firstParty,
-		bytes20 hashedSecret,
+		bytes32 hashedSecret,
 		uint deadLine)
 	external payable;
 
 	function DoSwap (
-		bytes32 secret,
-		bytes20 hashedSecret)
+		bytes secret,
+		bytes32 hashedSecret)
 	external;
 
 	function Refund (
-		bytes20 hashedSecret)
+		bytes32 hashedSecret)
 	external;
 }

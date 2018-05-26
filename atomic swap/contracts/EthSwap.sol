@@ -6,7 +6,7 @@ import "./IEthSwap.sol";
 contract EthSwap is IEthSwap{
 
 	// All the swaps
-	mapping (bytes20 => Swap) public swaps;
+	mapping (bytes32 => Swap) public swaps;
 
 	// State of a swap
 	enum SwapState { Usable, OneHand, TwoHands, NotUsable }
@@ -19,7 +19,7 @@ contract EthSwap is IEthSwap{
 		uint secondPartyValue;
 		uint startTime;
 		uint deadLine;
-		bytes20 hashedSecret;
+		bytes32 hashedSecret;
 		bytes32 secret;
 		SwapState swapState;		
 	}
@@ -31,28 +31,28 @@ contract EthSwap is IEthSwap{
 	event Refunded(address party, uint deadLine);
 
 	//Modifiers
-	modifier canInitiate(bytes20 secretHash) { 
+	modifier canInitiate(bytes32 secretHash) { 
 		require (swaps[secretHash].swapState == SwapState.Usable); 
 		_; 
 	}
 
-	modifier canParticipate(bytes20 secretHash, address firstParty, address secondParty) { 
+	modifier canParticipate(bytes32 secretHash, address firstParty, address secondParty) { 
 		require (swaps[secretHash].swapState == SwapState.OneHand);
 		require (swaps[secretHash].firstParty == firstParty);
 		require (swaps[secretHash].secondParty == secondParty);
-		require (block(this.block).timestamp <= swaps[secretHash].deadLine);
+		require (block.timestamp <= swaps[secretHash].deadLine);
 		_; 
 	}
 
-	modifier canSwap(bytes32 secret, bytes20 secretHash) { 
+	modifier canSwap(bytes secret, bytes32 secretHash) { 
 		require (swaps[secretHash].swapState == SwapState.TwoHands);
-		require (block(this.block).timestamp <= swaps[secretHash].deadLine);
-		require (ripemd160(abi.encodePacked(secret)) == swaps[secretHash].hashedSecret);
+		require (block.timestamp <= swaps[secretHash].deadLine);
+		require (keccak256(secret) == swaps[secretHash].hashedSecret);
 		_; 
 	}
 
-	modifier canRefund(bytes20 secretHash) { 
-		require (block(this.block).timestamp > swaps[secretHash].deadLine);
+	modifier canRefund(bytes32 secretHash) { 
+		require (block.timestamp > swaps[secretHash].deadLine);
 		_; 
 	}
 	
@@ -61,14 +61,14 @@ contract EthSwap is IEthSwap{
 
 	function FirstPartyInitiate(
 		address secondParty,
-		bytes20 hashedSecret,
+		bytes32 hashedSecret,
 		uint deadLine)
 	external payable
 	canInitiate(hashedSecret) {
 		swaps[hashedSecret].firstParty = msg.sender;
 		swaps[hashedSecret].secondParty = secondParty;
 		swaps[hashedSecret].firstPartyValue = msg.value;
-		swaps[hashedSecret].startTime = block(this.block).timestamp;
+		swaps[hashedSecret].startTime = block.timestamp;
 		swaps[hashedSecret].deadLine = deadLine;
 		swaps[hashedSecret].hashedSecret = hashedSecret;
 		swaps[hashedSecret].swapState = SwapState.OneHand;
@@ -78,7 +78,7 @@ contract EthSwap is IEthSwap{
 
 	function SecondPartyParticipate (
 		address firstParty,
-		bytes20 hashedSecret,
+		bytes32 hashedSecret,
 		uint deadLine)
 	external payable
 	canParticipate(hashedSecret, firstParty, msg.sender) {
@@ -89,8 +89,8 @@ contract EthSwap is IEthSwap{
 	}
 	
 	function DoSwap (
-		bytes32 secret,
-		bytes20 hashedSecret)
+		bytes secret,
+		bytes32 hashedSecret)
 	external
 	canSwap(secret, hashedSecret) {
 		swaps[hashedSecret].swapState = SwapState.NotUsable;
@@ -107,7 +107,7 @@ contract EthSwap is IEthSwap{
 	}
 
 	function Refund (
-		bytes20 hashedSecret)
+		bytes32 hashedSecret)
 	external
 	canRefund(hashedSecret) {
 		if(msg.sender == swaps[hashedSecret].firstParty) {
