@@ -5,7 +5,7 @@ import "./WETHInterface.sol";
 import "./MoneyMarketInterface.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract Borrower {
+contract CDP {
     using SafeMath for uint256;
     uint256 constant expScale = 10**18;
     uint256 constant collateralRatioBuffer = 25 * 10**16;

@@ -1,13 +1,48 @@
+require("dotenv").config();
 const Web3 = require("web3");
-const interface = require("../build/contracts/Borrower.json");
+const interface = require("../build/contracts/TokenBorrowerFactory");
 
-var web3 = new Web3("http://localhost:8545");
+// Environment Variables
+const nodeUrl = process.env.RINKEBY_URL;
+const contractDeployedAddress = process.env.RINKEBY_CONTRACT_ADDRESS;
+const userAddress = process.env.USER_ADDRESS;
 
-// web3.eth.getAccounts().then(accounts => console.log(accounts));
+var web3 = new Web3(nodeUrl);
 
-let borrower = new web3.eth.Contract(
-  interface.abi,
-  "0xce18044fc66b61422fce288b4b9089c9442da832"
-);
+function log(message, label) {
+  if (label) {
+    console.log(label + " : ", message);
+  } else {
+    console.log(message);
+  }
+}
 
-console.log("Borrower", borrower);
+let borrower = new web3.eth.Contract(interface.abi, contractDeployedAddress);
+
+function getCurrentBorrow(borrower) {
+  borrower.methods
+    .getBorrowBalance(userAddress)
+    .call()
+    .then(log);
+}
+
+function getFundBalance(borrower) {
+  borrower.methods
+    .getSupplyBalance(userAddress)
+    .call()
+    .then(log);
+}
+
+let command = process.argv[2];
+if (!command) {
+  log("token fund");
+}
+
+switch (command) {
+  case "token":
+    getCurrentBorrow(borrower);
+    break;
+  case "fund":
+    getFundBalance(borrower);
+    break;
+}
