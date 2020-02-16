@@ -38,19 +38,29 @@ function getFundBalance(borrower) {
     .then(log);
 }
 
+function getBorrowers(borrower) {
+  borrower.methods
+    .borrowers(userAddress)
+    .call()
+    .then(log);
+}
+
+getBorrowers(borrower);
+
 async function borrow(borrower, collateralValue) {
   //   const gas = await web3.eth.estimateGas({
   //     to: contractDeployedAddress,
   //     data: ""
   //   });
-  const txCount = await web3.eth.getTransactionCount(userAddress, "pending");
+  //   const txCount = await web3.eth.getTransactionCount(userAddress, "pending");
   //   const rawTx = {
   //     // from: userAddress,
-  //     nonce: txCount,
+  //     nonce: web3.utils.numberToHex(txCount),
   //     to: contractDeployedAddress,
   //     gasPrice: web3.utils.toHex(20 * 1e9),
   //     gasLimit: web3.utils.toHex(210000),
-  //     value: web3.utils.toWei(collateralValue)
+  //     value: web3.utils.numberToHex(web3.utils.toWei(collateralValue)),
+  //     data: "0x00"
   //     // chainId: 4,
   //     // chain: 4
   //   };
@@ -61,11 +71,19 @@ async function borrow(borrower, collateralValue) {
   const txOptions = {
     from: userAddress,
     gasPrice: "20000000000",
-    gas: "21000",
+    // gas: "10000000",
     to: contractDeployedAddress,
     value: web3.utils.toWei(collateralValue),
     data: ""
   };
+
+  //   web3.eth
+  //     .call({
+  //       to: contractDeployedAddress,
+  //       data: "0x" + tx
+  //     })
+  //     .then(log);
+  //   return;
 
   const signedTx = await web3.eth.signTransaction(txOptions);
 
@@ -73,11 +91,9 @@ async function borrow(borrower, collateralValue) {
     .sendSignedTransaction(signedTx.raw)
     .on("receipt", log)
     .on("error", (error, receipt) => {
-      log(receipt, "receipt");
+      //   log(receipt, "receipt");
       log(error, "error");
     });
-
-  //   web3.eth.accounts.signTransaction(transaction).then(log);
 }
 
 let command = process.argv[2];
