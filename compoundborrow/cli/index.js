@@ -71,7 +71,7 @@ async function borrow(borrower, collateralValue) {
   const txOptions = {
     from: userAddress,
     gasPrice: "20000000000",
-    // gas: "10000000",
+    gas: "150000",
     to: contractDeployedAddress,
     value: web3.utils.toWei(collateralValue),
     data: ""
