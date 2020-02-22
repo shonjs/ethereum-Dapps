@@ -32,38 +32,71 @@ const dai = 1e18;
 
 web3.eth.handleRevert = true;
 
-daiContract.methods
-  .approve(cDAIContractAddress, web3.utils.toBN(dai))
-  .send({
-    from: myWalletAddress,
-    gasLimit: web3.utils.toHex(150000),
-    gasPrice: web3.utils.toHex(20000000000)
-  })
-  .then(result => {
-    log("DAI approved for minting");
-    log("Sending DAI to compound");
-    return compoundcDAIContract.methods.mint(web3.utils.toBN(dai)).send({
-      from: myWalletAddress,
-      gasLimit: web3.utils.toHex(600000),
-      gasPrice: web3.utils.toHex(20000000000)
+function isDAIBalanceAvailable(address, requiredDai) {
+  return daiContract.methods
+    .balanceOf(address)
+    .call()
+    .then(daiBalance => {
+      log(daiBalance, "dai balance");
+      if (daiBalance < requiredDai) {
+        return false;
+      }
+      return true;
     });
-  })
-  .then(result => {
-    console.log('cDAI "Mint" operation successful.');
-    return compoundcDAIContract.methods
-      .balanceOfUnderlying(myWalletAddress)
-      .call();
-  })
-  .then(balanceOfUnderlying => {
-    balanceOfUnderlying = web3.utils.fromWei(balanceOfUnderlying).toString();
-    console.log("DAI supplied to the Compound Protocol:", balanceOfUnderlying);
-    return compoundcDAIContract.methods.balanceOf(myWalletAddress).call();
-  })
-  .then(cTokenBalance => {
-    cTokenBalance = (cTokenBalance / 1e8).toString();
-    console.log("My wallet's cDAI Token Balance:", cTokenBalance);
-  })
-  .catch((error, receipt) => {
-    console.error(error);
-    if (receipt) log("receipt", receipt);
-  });
+}
+
+isDAIBalanceAvailable(myWalletAddress, dai).then(available => {
+  if (!available) {
+    log("Not enough balance");
+    exit();
+  } else {
+    fundDai();
+  }
+});
+
+function fundDai() {
+  daiContract.methods
+    .approve(cDAIContractAddress, web3.utils.toBN(dai))
+    .send({
+      from: myWalletAddress,
+      gasLimit: web3.utils.toHex(150000),
+      gasPrice: web3.utils.toHex(20000000000)
+    })
+    .then(result => {
+      log("DAI approved for minting");
+      log("Sending DAI to compound");
+      return compoundcDAIContract.methods.mint(web3.utils.toBN(dai)).send({
+        from: myWalletAddress,
+        gasLimit: web3.utils.toHex(600000),
+        gasPrice: web3.utils.toHex(20000000000)
+      });
+    })
+    .then(result => {
+      console.log('cDAI "Mint" operation successful.');
+      return compoundcDAIContract.methods
+        .balanceOfUnderlying(myWalletAddress)
+        .call();
+    })
+    .then(balanceOfUnderlying => {
+      balanceOfUnderlying = web3.utils.fromWei(balanceOfUnderlying).toString();
+      console.log(
+        "DAI supplied to the Compound Protocol:",
+        balanceOfUnderlying
+      );
+      return compoundcDAIContract.methods.balanceOf(myWalletAddress).call();
+    })
+    .then(cTokenBalance => {
+      cTokenBalance = (cTokenBalance / 1e8).toString();
+      console.log("My wallet's cDAI Token Balance:", cTokenBalance);
+    })
+    .catch((error, receipt) => {
+      console.error(error);
+      if (receipt) log("receipt", receipt);
+    });
+}
+
+function exit() {
+  provider.engine.stop();
+}
+
+exit();
