@@ -5,21 +5,16 @@ const interface = require("../build/contracts/TokenBorrowerFactory");
 const Tx = require("ethereumjs-tx").Transaction;
 
 // Environment Variables
-const nodeUrl = process.env.RINKEBY_URL;
-const contractDeployedAddress = process.env.RINKEBY_CONTRACT_ADDRESS;
+const network = "kovan";
+const nodeUrls = JSON.parse(process.env.NODE_URL);
+const nodeUrl = nodeUrls[network];
+const cETHAddresses = JSON.parse(process.env.cETH_CONTRACT_ADDRESS);
+const contractDeployedAddress = cETHAddresses[network];
 const userAddress = process.env.USER_ADDRESS;
 const mnemonic = process.env.WALLET_MNEMONIC;
 const provider = new HDWalletProvider(mnemonic, nodeUrl);
 
 var web3 = new Web3(provider);
-
-function log(message, label) {
-  if (label) {
-    console.log(label + " : ", message);
-  } else {
-    console.log(message);
-  }
-}
 
 let borrower = new web3.eth.Contract(interface.abi, contractDeployedAddress);
 borrower.handleRevert = true;

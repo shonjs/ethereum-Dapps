@@ -8,7 +8,7 @@ const nodeUrl = process.env.RINKEBY_URL;
 const mnemonic = process.env.WALLET_MNEMONIC;
 const myWalletAddress = process.env.USER_ADDRESS;
 const provider = new HDWalletProvider(mnemonic, nodeUrl);
-const addresses = JSON.parse(process.env.CONTRACT_ADDRESS);
+const addresses = JSON.parse(process.env.cETH_CONTRACT_ADDRESS);
 const contractAddress = addresses["rinkeby"];
 
 var web3 = new Web3(provider);
