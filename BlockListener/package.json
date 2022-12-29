@@ -3,7 +3,7 @@
   "version": "0.0.01",
   "devDependencies": {
     "dotenv": "^5.0.0",
-    "ganache-cli": "^6.0.3",
+    "ganache-cli": "^6.12.2",
     "web3": "^1.0.0-beta.29"
   },
   "dependencies": {}
